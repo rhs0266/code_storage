@@ -1,7 +1,7 @@
 #include <stdio.h>
 #pragma warning(disable:4996)
-//FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w");
-FILE *in = stdin, *out = stdout;
+FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w");
+//FILE *in = stdin, *out = stdout;
 #include <vector>
 #include <algorithm>
 #include <math.h>
@@ -16,31 +16,16 @@ typedef long long int ll;
 
 #include <string.h>
 #include <assert.h>
-#define ID0 "0"
-#define ID1 "1"
-#define ID2 "2"
-#define ID3 "3"
-#define ID4 "4"
-#define ID5 "5"
-#define ID6 "6"
-#define ID7 "7"
-#define ID8 "8"
-#define ID9 "9"
-#define IDa "a"
-#define IDb "b"
-#define IDc "c"
-#define IDd "d"
-#define IDe "e"
-#define IDf "f"
-#define eps 'Z'
-#define EPS "Z"
+#define eps '.'
+#define EPS ""
 
-struct EDGE{
+char ID[30][10] = { "0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f" };
+struct EDGE {
 	int to;
 	char inp;
-	char top, push[];
+	char top, push[10];
 	EDGE() {}
-	EDGE(int to,char inp, char top, char _push[]) :to(to),inp(inp),top(top) {
+	EDGE(int to, char inp, char top, char _push[]) :to(to), inp(inp), top(top) {
 		strcpy(push, _push);
 	}
 };
@@ -59,29 +44,34 @@ struct STATE {
 
 struct DPA {
 	vector<STATE> states;
-	int init, waypoint, final;
-	char vars[10] = "EXTYFA";
+	int init, waypoint, fin, dead;
+	char vars[9] = "EXTYFAPQ";
 	char alphabets[50] = "0123456789abcdef+-*/()#";
-	char table[6][23][10];
+	char table[8][23][10];
+	char alphaString[105], st[105];
+	int aCnt = 0, sCnt;
+	bool exist[8][23];
 
 	void edit_cell(char var, char alphabet, char info[]) {
 		int row = -1, col = -1;
 		for (int i = 0; i < strlen(vars); i++) if (vars[i] == var) row = i;
-		for (int i=0;i<strlen(alphabets);i++) if (alphabets[i] == alphabet) col = i;
+		for (int i = 0; i<strlen(alphabets); i++) if (alphabets[i] == alphabet) col = i;
 		assert(row != -1); assert(col != -1);
 		strcpy(table[row][col], info);
+		exist[row][col] = true;
 	}
 
 	void setting_table() {
 		// E -> TX
-		for (int i = '0'; i <= '9'; i++) edit_cell('E', i, "Te");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('E', i, "Te");
-		edit_cell('E', '(', "Te");
+		for (int i = '0'; i <= '9'; i++) edit_cell('E', i, "TX");
+		for (int i = 'a'; i <= 'f'; i++) edit_cell('E', i, "TX");
+		edit_cell('E', '(', "TX");
 
 		// X -> +TX | -TX | eps
 		edit_cell('X', '+', "+TX");
 		edit_cell('X', '-', "-TX");
 		edit_cell('X', '#', EPS);
+		edit_cell('X', ')', EPS);
 
 		// T -> FY
 		for (int i = '0'; i <= '9'; i++) edit_cell('T', i, "FY");
@@ -89,42 +79,129 @@ struct DPA {
 		edit_cell('T', '(', "FY");
 
 		// Y -> *FY | /FY | eps
+		edit_cell('Y', '+', EPS);
+		edit_cell('Y', '-', EPS);
 		edit_cell('Y', '*', "*FY");
 		edit_cell('Y', '/', "/FY");
 		edit_cell('Y', '#', EPS);
+		edit_cell('Y', ')', EPS);
 
-		// F -> (E) | A
-		for (int i = '0'; i <= '9'; i++) edit_cell('T', i, "FY");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('T', i, "FY");
-		edit_cell('F', '(', "(E)");
+		// F -> PEQ | A
+		for (int i = '0'; i <= '9'; i++) edit_cell('F', i, "A");
+		for (int i = 'a'; i <= 'f'; i++) edit_cell('F', i, "A");
+		edit_cell('F', '(', "PEQ");
 
 		// A -> 0 | 1 | ... | f
-		for (int i = '0'; i <= '9'; i++) edit_cell('A', i, "i");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('A', i, "i");
+		for (int i = '0'; i <= '9'; i++) edit_cell('A', i, ID[i - '0']);
+		for (int i = 'a'; i <= 'f'; i++) edit_cell('A', i, ID[i - 'a' + 10]);
 
+		// P -> (
+		edit_cell('P', '(', "(");
+
+		// Q -> )
+		edit_cell('Q', ')', ")");
 	}
 
-	void makeDPA() {
+	void setting_edge() {
 		int nvars = strlen(vars);
 		int nalphabets = strlen(alphabets);
 
-		init = nalphabets; waypoint = nalphabets + 1; final = nalphabets + 2;
+		init = nalphabets; waypoint = nalphabets + 1; fin= nalphabets + 2; dead = nalphabets + 3;
 
-		states.resize(nalphabets + 3);
-
-		setting_table();
+		FOR(i, 0, nalphabets + 1) states.push_back(STATE(i, false, false));
+		states.push_back(STATE(nalphabets + 2, true, false));
+		states.push_back(STATE(nalphabets + 3, false, true));
 
 		for (int i = 0; i<nvars; i++) {
 			for (int j = 0; j<nalphabets; j++) {
-				if (strcmp(table[i][j], "") == 0) {
+				if (!exist[i][j]) {
 					continue;
 				}
 				states[j].push_edge(j, eps, vars[i], table[i][j]);
 			}
 		}
+
+		states[init].push_edge(waypoint, eps, '#', "E#");
+
+		for (int i = 0; i < nalphabets; i++) {
+			states[waypoint].push_edge(i, alphabets[i], eps, EPS);
+			if (i < nalphabets - 1)	
+				states[i].push_edge(waypoint, eps, alphabets[i], EPS);
+		}
+
+		states[nalphabets - 1].push_edge(fin, eps, '#', "#");
+	}
+
+	void makeDPA() {
+		setting_table();
+		setting_edge();
+	}
+
+	void Pop() {
+		st[sCnt--] = 0;
+	}
+	void Push(char *str) {
+		for (int i = strlen(str) - 1; i >= 0; i--) {
+			st[++sCnt] = str[i];
+		}
+		st[sCnt + 1] = 0;
 	}
 
 	bool read(char* inp) {
+		int cur = init, idx = 0, printFlag = 0;
+		strcpy(st, "#");
+		while (cur != fin) {
+			printFlag = 0;
+			int nxt = -1;
+			for (auto &edge : states[cur].edges) {
+				if (edge.inp == eps) {
+					if (sCnt >= 0) {
+						if (st[sCnt] == edge.top) {
+							nxt = edge.to;
+							printFlag = 1;
+							Pop();
+							Push(edge.push);
+							if ((nxt == waypoint || nxt == fin) && cur < strlen(alphabets)) {
+								alphaString[aCnt++] = alphabets[cur];
+								alphaString[aCnt] = 0;
+								printFlag = 0;
+							}
+							break;
+						}
+					}
+				}
+				else if (idx < strlen(inp)){
+					if (edge.inp == inp[idx]) {
+						nxt = edge.to;
+						idx++;
+						break;
+					}
+				}
+			}
+			if (nxt == -1) return false;
+			cur = nxt;
+			if (printFlag) {
+				fprintf(out, "=> %s", alphaString);
+				for (int i = strlen(st) - 1; i >= 1; i--) {
+					fprintf(out, "%c", st[i]);
+				}
+				fprintf(out, "\n");
+			}
+		}
 		return true;
 	}
 }dpa;
+
+char inp[105];
+int main() {
+	dpa.makeDPA();
+	fscanf(in, "%s", inp);
+	strcat(inp, "#");
+	if (dpa.read(inp)) {
+		puts("YES");
+	}
+	else {
+		puts("NO");
+	}
+	return 0;
+}
