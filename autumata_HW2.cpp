@@ -1,6 +1,21 @@
 // Create
 #include <string.h>
-#define ID "0"
+#define ID0 "0"
+#define ID1 "1"
+#define ID2 "2"
+#define ID3 "3"
+#define ID4 "4"
+#define ID5 "5"
+#define ID6 "6"
+#define ID7 "7"
+#define ID8 "8"
+#define ID9 "9"
+#define IDa "a"
+#define IDb "b"
+#define IDc "c"
+#define IDd "d"
+#define IDe "e"
+#define IDf "f"
 #define eps "X"
 
 
@@ -31,11 +46,7 @@ struct DPA{
     int init, waypoint, final;
     char vars[]="EeTtFA";
     char alphabets[]="0+-*/()#";
-    char table[6][8][]={{"Te","","","","","Te","",""},
-                        {"","+Te","-Te","","","","",eps},
-                        {"Ft","","","","","Ft","",""},
-                        {"A","","","","","(E)","",""},
-                        {ID,"","","","","","",""}};
+    char table[6][23][];
     
     DPA(){ init=6; final=7; }
     
