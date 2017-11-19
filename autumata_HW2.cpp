@@ -1,6 +1,6 @@
 #include <stdio.h>
 #pragma warning(disable:4996)
-FILE *in = fopen("input.txt", "r"), *out = fopen("2014-16371.out", "w"), *out_temp = fopen("output_temp.txt","w");
+FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w"), *out_temp = fopen("output_temp.txt","w");
 //FILE *in = stdin, *out = stdout;
 #include <vector>
 #include <algorithm>
@@ -33,11 +33,9 @@ struct EDGE {
 
 struct STATE {
 	int id;
-	bool final_state;
-	bool dead_state;
 	vector<EDGE> edges;
 	STATE() {}
-	STATE(int id, bool fs, bool ds) : id(id), final_state(fs), dead_state(ds) {}
+	STATE(int id, bool fs, bool ds) : id(id) {}
 	void push_edge(int to, char inp, char top, char _push[]) {
 		edges.push_back(EDGE(to, inp, top, _push));
 	}
@@ -45,7 +43,7 @@ struct STATE {
 
 struct DPA {
 	vector<STATE> states;
-	int init, waypoint, fin, dead;
+	int init, waypoint, fin;
 	char vars[9] = "EXTYFAPQ";
 	char alphabets[50] = "234567abcdxyz+-*/()#";
 	char table[8][23][10];
@@ -107,11 +105,11 @@ struct DPA {
 		edit_cell('Q', ')', ")");
 	}
 
-	void setting_edge() {
+	void setting_graph() {
 		int nvars = strlen(vars);
 		int nalphabets = strlen(alphabets);
 
-		init = nalphabets; waypoint = nalphabets + 1; fin = nalphabets + 2; dead = nalphabets + 3;
+		init = nalphabets; waypoint = nalphabets + 1; fin = nalphabets + 2;
 
 		FOR(i, 0, nalphabets + 1) states.push_back(STATE(i, false, false));
 		states.push_back(STATE(nalphabets + 2, true, false));
@@ -139,7 +137,7 @@ struct DPA {
 
 	void makeDPA() {
 		setting_table();
-		setting_edge();
+		setting_graph();
 	}
 
 	void Pop() {
