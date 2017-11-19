@@ -1,6 +1,6 @@
 #include <stdio.h>
 #pragma warning(disable:4996)
-FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w"), *out_temp = fopen("output_temp.txt","w");
+FILE *in = fopen("input.txt", "r"), *out = fopen("2014_16371.out", "w"), *out_temp = fopen("output_temp.txt", "w");
 //FILE *in = stdin, *out = stdout;
 #include <vector>
 #include <algorithm>
@@ -48,8 +48,16 @@ struct DPA {
 	char alphabets[50] = "234567abcdxyz+-*/()#";
 	char table[8][23][10];
 	char alphaString[105], st[505];
-	int aCnt = 0, sCnt;
+	int aCnt = 0, sCnt = 0;
 	bool exist[8][23];
+
+	DPA() {
+		states.clear();
+		init = waypoint = fin = 0;
+		FOR(i, 0, 7) FOR(j, 0, 22) FOR(k, 0, 9) table[i][j][k] = 0;
+		aCnt = sCnt = 0;
+		FOR(i, 0, 7) FOR(j, 0, 22) exist[i][j] = false;
+	}
 
 	void edit_cell(char var, char alphabet, char info[]) {
 		int row = -1, col = -1;
@@ -152,6 +160,7 @@ struct DPA {
 
 	bool read(char* inp) {
 		int cur = init, idx = 0, printFlag = 0, loopIdx = 0;
+		aCnt = sCnt = 0;
 		strcpy(st, "#");
 		while (cur != fin) {
 			printFlag = 0;
@@ -182,7 +191,8 @@ struct DPA {
 					}
 				}
 			}
-			if (nxt == -1) return false;
+			if (nxt == -1)
+				return false;
 			cur = nxt;
 			if (printFlag) {
 				fprintf(out_temp, "=> %s", alphaString);
@@ -202,10 +212,10 @@ int main() {
 	fscanf(in, "%s", inp);
 	strcat(inp, "#");
 	if (dpa.read(inp)) {
-		fprintf(out,"Yes\n");
+		fprintf(out, "Yes\n");
 		fclose(out_temp);
 		FILE *in_temp = fopen("output_temp.txt", "r");
-		while (fgets(printStr,NM,in_temp) != NULL) {
+		while (fgets(printStr, NM, in_temp) != NULL) {
 			fprintf(out, "%s", printStr);
 		}
 	}
