@@ -1,6 +1,6 @@
 #include <stdio.h>
 #pragma warning(disable:4996)
-FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w");
+FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w"), *out_temp = fopen("output_temp.txt","w");
 //FILE *in = stdin, *out = stdout;
 #include <vector>
 #include <algorithm>
@@ -19,7 +19,8 @@ typedef long long int ll;
 #define eps '.'
 #define EPS ""
 
-char ID[30][10] = { "0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f" };
+char ID[30][10] = { "2","3","4","5","6","7","a","b","c","d","x","y","z" };
+char printStr[NM];
 struct EDGE {
 	int to;
 	char inp;
@@ -46,9 +47,9 @@ struct DPA {
 	vector<STATE> states;
 	int init, waypoint, fin, dead;
 	char vars[9] = "EXTYFAPQ";
-	char alphabets[50] = "0123456789abcdef+-*/()#";
+	char alphabets[50] = "234567abcdxyz+-*/()#";
 	char table[8][23][10];
-	char alphaString[105], st[105];
+	char alphaString[105], st[505];
 	int aCnt = 0, sCnt;
 	bool exist[8][23];
 
@@ -63,8 +64,9 @@ struct DPA {
 
 	void setting_table() {
 		// E -> TX
-		for (int i = '0'; i <= '9'; i++) edit_cell('E', i, "TX");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('E', i, "TX");
+		for (int i = '2'; i <= '7'; i++) edit_cell('E', i, "TX");
+		for (int i = 'a'; i <= 'd'; i++) edit_cell('E', i, "TX");
+		for (int i = 'x'; i <= 'z'; i++) edit_cell('E', i, "TX");
 		edit_cell('E', '(', "TX");
 
 		// X -> +TX | -TX | eps
@@ -74,8 +76,9 @@ struct DPA {
 		edit_cell('X', ')', EPS);
 
 		// T -> FY
-		for (int i = '0'; i <= '9'; i++) edit_cell('T', i, "FY");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('T', i, "FY");
+		for (int i = '2'; i <= '7'; i++) edit_cell('T', i, "FY");
+		for (int i = 'a'; i <= 'd'; i++) edit_cell('T', i, "FY");
+		for (int i = 'x'; i <= 'z'; i++) edit_cell('T', i, "FY");
 		edit_cell('T', '(', "FY");
 
 		// Y -> *FY | /FY | eps
@@ -87,13 +90,15 @@ struct DPA {
 		edit_cell('Y', ')', EPS);
 
 		// F -> PEQ | A
-		for (int i = '0'; i <= '9'; i++) edit_cell('F', i, "A");
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('F', i, "A");
+		for (int i = '2'; i <= '7'; i++) edit_cell('F', i, "A");
+		for (int i = 'a'; i <= 'd'; i++) edit_cell('F', i, "A");
+		for (int i = 'x'; i <= 'z'; i++) edit_cell('F', i, "A");
 		edit_cell('F', '(', "PEQ");
 
-		// A -> 0 | 1 | ... | f
-		for (int i = '0'; i <= '9'; i++) edit_cell('A', i, ID[i - '0']);
-		for (int i = 'a'; i <= 'f'; i++) edit_cell('A', i, ID[i - 'a' + 10]);
+		// A -> 2 | 3 | .. | z
+		for (int i = '2'; i <= '7'; i++) edit_cell('A', i, ID[i - '2']);
+		for (int i = 'a'; i <= 'd'; i++) edit_cell('A', i, ID[i - 'a' + 6]);
+		for (int i = 'x'; i <= 'z'; i++) edit_cell('A', i, ID[i - 'x' + 10]);
 
 		// P -> (
 		edit_cell('P', '(', "(");
@@ -106,7 +111,7 @@ struct DPA {
 		int nvars = strlen(vars);
 		int nalphabets = strlen(alphabets);
 
-		init = nalphabets; waypoint = nalphabets + 1; fin= nalphabets + 2; dead = nalphabets + 3;
+		init = nalphabets; waypoint = nalphabets + 1; fin = nalphabets + 2; dead = nalphabets + 3;
 
 		FOR(i, 0, nalphabets + 1) states.push_back(STATE(i, false, false));
 		states.push_back(STATE(nalphabets + 2, true, false));
@@ -125,7 +130,7 @@ struct DPA {
 
 		for (int i = 0; i < nalphabets; i++) {
 			states[waypoint].push_edge(i, alphabets[i], eps, EPS);
-			if (i < nalphabets - 1)	
+			if (i < nalphabets - 1)
 				states[i].push_edge(waypoint, eps, alphabets[i], EPS);
 		}
 
@@ -148,10 +153,11 @@ struct DPA {
 	}
 
 	bool read(char* inp) {
-		int cur = init, idx = 0, printFlag = 0;
+		int cur = init, idx = 0, printFlag = 0, loopIdx = 0;
 		strcpy(st, "#");
 		while (cur != fin) {
 			printFlag = 0;
+			loopIdx++;
 			int nxt = -1;
 			for (auto &edge : states[cur].edges) {
 				if (edge.inp == eps) {
@@ -170,7 +176,7 @@ struct DPA {
 						}
 					}
 				}
-				else if (idx < strlen(inp)){
+				else if (idx < strlen(inp)) {
 					if (edge.inp == inp[idx]) {
 						nxt = edge.to;
 						idx++;
@@ -181,11 +187,11 @@ struct DPA {
 			if (nxt == -1) return false;
 			cur = nxt;
 			if (printFlag) {
-				fprintf(out, "=> %s", alphaString);
+				fprintf(out_temp, "=> %s", alphaString);
 				for (int i = strlen(st) - 1; i >= 1; i--) {
-					fprintf(out, "%c", st[i]);
+					fprintf(out_temp, "%c", st[i]);
 				}
-				fprintf(out, "\n");
+				fprintf(out_temp, "\n");
 			}
 		}
 		return true;
@@ -198,10 +204,15 @@ int main() {
 	fscanf(in, "%s", inp);
 	strcat(inp, "#");
 	if (dpa.read(inp)) {
-		puts("YES");
+		fprintf(out,"Yes\n");
+		fclose(out_temp);
+		FILE *in_temp = fopen("output_temp.txt", "r");
+		while (fgets(printStr,NM,in_temp) != NULL) {
+			fprintf(out, "%s", printStr);
+		}
 	}
 	else {
-		puts("NO");
+		fprintf(out, "No\n");
 	}
 	return 0;
 }
