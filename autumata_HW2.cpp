@@ -1,6 +1,6 @@
 #include <stdio.h>
 #pragma warning(disable:4996)
-FILE *in = fopen("input.txt", "r"), *out = fopen("output.txt", "w"), *out_temp = fopen("output_temp.txt","w");
+FILE *in = fopen("input.txt", "r"), *out = fopen("2014-16371.out", "w"), *out_temp = fopen("output_temp.txt","w");
 //FILE *in = stdin, *out = stdout;
 #include <vector>
 #include <algorithm>
